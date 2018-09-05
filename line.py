@@ -25,15 +25,16 @@ class Line(object):
         m6 = other.p1.cross(other.p2)
         m = m2+m3+m4+m5
         if m != 0:
-            tw = (m1+m2+m3) / m
-            tr = (m6-m5-m3) / -m
+            #print m
+            tw = (m1+m2+m3) / float(m)
+            tr = (m6-m5-m3) / -float(m)
             if forward:
                 if tr >= 0 and 0 <= tw <= 1:
-                    return tr
+                    return tr, tw
             else:
                 if 0 <= tw <=1:
-                    return tr
-        return None
+                    return tr, tw
+        return None, None
     
     def render(self, screen):
         pygame.draw.line(screen, self.color, self.p1.toTuple(),

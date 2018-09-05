@@ -12,8 +12,12 @@ class Map(object):
         self.walls = mapRaw()
         bsp = BinaryTree(self.walls)
         #bsp.manual()
-        bsp.divideLines(self.walls)
+        bsp.sliceLines(self.walls, 0)
+        #self.walls = bsp.sliced
+        #bsp.divideLines(self.walls)
+        print "WALKING"
         bsp.walk(bsp.tree, 0)
+        print "END WALK"
         self.tree = bsp.tree
         self.startNode = None
 

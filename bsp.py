@@ -28,58 +28,100 @@ class BinaryTree(object):
     def __init__(self, linelist):
         self.linelist = linelist
         self.tree = None
+        self.sliced = []
 
-    def divideLines(self, lines, side=None, parent=None):
+
+    def getLineFacingDirection(self, segment):
+        '''Given a segment, return the unit vector that describes its facing direction.  This is always a vector that is rotated 90 degrees ccw from this lines direction'''
+        d = Vector2D(segment.vec.y, segment.vec.x * -1)
+        return d.norm()
+        
+    def sliceLines(self, segments, index, node=None):
+        '''Slice up the line list into smaller segments based on intersections.  This will just make a longer line list called sliced.  Lines can only be sliced within their own groups.  When groups cannot be sliced anymore, then we are done.  Initially, all segments belong in the same group.  When a line gets sliced, then we divide up all the lines into two groups and then call this method on each group.  This method is recursive.'''
+        print "index = " + str(index) + " segments = " + str(len(segments))
+        frontgroup = []
+        backgroup = []
         newlines = []
-        frontlines = []
-        backlines = []
-        #The best line to make root node is a line in the middle
-        #For now we can just randomly choose one
-        n = randint(0, len(lines)-1) 
-        if parent is None:
-            node = Node(segment=lines[n])
-            self.tree = node
-        else:
-            node = Node(segment=lines[n])
-            parent.children[side] = node
-            node.parent = parent
-
-        for i in range(len(lines)):
-            if i != n:
-                t = lines[n].FindIntersect(lines[i], forward=False)
-                if t != None and t != 0 and t != 1:
-                    vec = lines[n].p1 + lines[n].vec * t
-                    line1 = lines[i].p1.toTuple() + vec.toTuple()
-                    line2 = vec.toTuple() + lines[i].p2.toTuple()
-                    newlines.append(Line(*line1))
-                    newlines.append(Line(*line2))
-                else:
-                    newlines.append(lines[i])
-
-        for i in range(len(newlines)):
-            v1 = newlines[i].p1 - node.position
-            v2 = newlines[i].p2 - node.position
-            if node.direction.dot(v1) < 0 or node.direction.dot(v2) < 0:
-                backlines.append(newlines[i])
+        line = segments[index]
+        #newlines.append(line)
+        direction = self.getLineFacingDirection(line)
+        for i in range(len(segments)):
+            #print line
+            #print segments[i]
+            t, t2 = line.FindIntersect(segments[i], forward=False)
+            if t != None and t2 != 0 and t2 != 1:
+                vec = line.p1 + line.vec * t
+                line1 = segments[i].p1.toTuple() + vec.toTuple()
+                line2 = vec.toTuple() + segments[i].p2.toTuple()
+                print t, line1, line2
+                newlines.append(Line(*line1, color=segments[i].color))
+                newlines.append(Line(*line2, color=segments[i].color))
             else:
-                frontlines.append(newlines[i])
+                newlines.append(segments[i])
+        
+        #frontgroup.append(line)
+        for i in range(0, len(newlines)):
+            v1 = newlines[i].p1 - line.p1
+            v2 = newlines[i].p2 - line.p1
+            if direction.dot(v1) < 0 or direction.dot(v2) < 0:
+                backgroup.append(newlines[i])
+            else:
+                frontgroup.append(newlines[i])
+
+        print "Dividing line = " + str(line.p1) + " => " + str(line.p2)
+        print "Newlines = " + str(len(newlines))
+        print "Front = " + str(len(frontgroup))
+        print "Behind = " + str(len(backgroup))
+        print ""
+
+        if len(backgroup) > 0:
+            if node is None:
+                self.tree = Node(segment=line)
+                node = self.tree
+                frontgroup.remove(line)
+            else:
+                if node.children["Front"] is None:
+                    node.children["Front"] = Node(segment=line)
+                    node.children["Front"].parent = node
+                    node = node.children["Front"]
+                    frontgroup.remove(line)
+                else:
+                    node.children["Back"] = Node(segment=line)
+                    node.children["Back"].parent = node
+                    node = node.children["Back"]
+                    frontgroup.remove(line)
 
 
-        if len(frontlines) > 1:
-            self.divideLines(frontlines, "Front", node)
-        elif len(frontlines) == 1:
-            node.children["Front"] = Node(segment=frontlines[0])
-            node.children["Front"].parent = node
-
-        if len(backlines) > 1:
-            self.divideLines(backlines, "Back", node)
-        elif len(backlines) == 1:
-            node.children["Back"] = Node(segment=backlines[0])
-            node.children["Back"].parent = node
-
+            print "FRONT"
+            if len(frontgroup) > 0:
+                self.sliceLines(frontgroup, 0, node)
+            print "BACK"
+            if len(backgroup) > 0:
+                self.sliceLines(backgroup, 0, node)
+        else:
+            if index < len(frontgroup)-1:
+                print "Try Next --->"
+                self.sliceLines(frontgroup, index+1, node)
+            else:
+                if node.children["Front"] is None:
+                    node.children["Front"] = Node(segment=line)
+                    node.children["Front"].parent = node
+                    node = node.children["Front"]
+                    frontgroup.remove(line)
+                    if len(frontgroup) != 0:
+                        self.sliceLines(frontgroup, 0, node)
+                else:
+                    node.children["Back"] = Node(segment=line)
+                    node.children["Back"].parent = node
+                    node = node.children["Back"]
+                    frontgroup.remove(line)
+                    if len(frontgroup) != 0:
+                        self.sliceLines(frontgroup, 0, node)
+                    
 
     def walk(self, node, level):
         '''Walk through the tree in order to map it out'''
+        print ""
         print node.position, node.direction
         if node.children["Front"] is not None:
             print "FRONT Level "+str(level+1)
@@ -132,6 +174,12 @@ class BinaryTree(object):
     
 #walls = mapRaw()
 #bt = BinaryTree(walls)
+#bt.sliceLines(walls, 0)
 #bt.divideLines(walls)
+#print bt.tree
 #bt.walk(bt.tree, 0)
+#print len(bt.sliced)
+
+#for i in range(len(bt.sliced)):
+#    print bt.sliced[i].p1, bt.sliced[i].p2
     

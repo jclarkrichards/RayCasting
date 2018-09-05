@@ -64,7 +64,7 @@ class RayCaster(object):
                     s = self.position + self.GetDirection(angle)
                     ray = Line(self.position.x, self.position.y, 
                                s.x, s.y, segment.color)
-                    t = ray.FindIntersect(segment)
+                    t, t2 = ray.FindIntersect(segment)
                     
                     if t != None:
                         newray = ray.p1 + (ray.p2-ray.p1)*t
