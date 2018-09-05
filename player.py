@@ -9,7 +9,7 @@ class RayCaster(object):
         self.screenW = screenW
         self.screenH = screenH
         self.numRays = 600
-        self.position = Vector2D(440, 200)
+        self.position = Vector2D(300, 300)
         self.pointAngle = pi/2
         self.viewAngle= pi/6.0
         self.da = 2*self.viewAngle / self.numRays
