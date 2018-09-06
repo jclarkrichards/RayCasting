@@ -30,6 +30,7 @@ class GameRun(object):
     def update(self):
         dt = self.clock.tick(30) / 1000.0
         self.player.Move(dt)
+        self.player.CheckCollision(self.walls.walls, self.screen)
         self.player.ResetRays()
         self.walls.TraverseTree(self.player, self.walls.tree)
         self.checkEvents()

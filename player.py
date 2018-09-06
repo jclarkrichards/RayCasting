@@ -8,6 +8,7 @@ class RayCaster(object):
     def __init__(self, screenW, screenH):
         self.screenW = screenW
         self.screenH = screenH
+        self.color = (255,0,0)
         self.numRays = 600
         self.position = Vector2D(300, 300)
         self.pointAngle = pi/2
@@ -21,6 +22,7 @@ class RayCaster(object):
         self.columnWidth = screenW / self.numRays
         self.hRatio = self.columnHeight*screenW*tan(self.viewAngle)
         self.radius = 15
+        self.radiusSquared = self.radius * self.radius
         self.rays = [None]*self.numRays
         self.wallType = [] #horizontal 'h' or vertical 'v'
         self.numRaysCast = 0
@@ -56,8 +58,10 @@ class RayCaster(object):
 
     def CastRays(self, segments):
         '''Apply line intersection algorithm here'''
+        #self.color = (255,0,0)
         startAngle = self.pointAngle - self.viewAngle
         for i, segment in enumerate(segments):
+            #self.CheckCollision(segment)
             for num in range(self.numRays):
                 if self.rays[num] is None:
                     angle = startAngle + self.da*num
@@ -73,9 +77,23 @@ class RayCaster(object):
                                               newray.x, newray.y,
                                               color=ray.color)
 
+    def CheckCollision(self, segments, screen):
+        self.color = (255,0,0)
+        print ""
+        for segment in segments:
+            print segment.p1, segment.p2
+            c = self.position - segment.p1
+            proj = segment.vec * (c.dot(segment.p1) / segment.vec.magnitudeSquared())
+            pygame.draw.line(screen, (200,200,0), segment.p1.toTuple(), proj.toTuple(), 2)
+            d = proj - c
+            if d.magnitudeSquared() <= self.radiusSquared:
+                print "collision I think"
+                if proj.dot(segment.vec) > 0:
+                    self.color = (200,200,0)
+
     def Render(self, screen):
         pos = Vector2D(int(self.position.x), int(self.position.y))
-        pygame.draw.circle(screen, (255,0,0), pos.toTuple(), self.radius)
+        pygame.draw.circle(screen, self.color, pos.toTuple(), self.radius)
 
     def RenderPointDirection(self, screen):
         p2 = self.lookDirection*200 +self.position
