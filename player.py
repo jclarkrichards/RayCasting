@@ -79,17 +79,60 @@ class RayCaster(object):
 
     def CheckCollision(self, segments, screen):
         self.color = (255,0,0)
-        print ""
+        #print ""
+        segment = segments[8]
         for segment in segments:
-            print segment.p1, segment.p2
+        #if True:
+            #print "P1, P2"
+            #print segment.p1, segment.p2
+            #print "vec"
+            #print segment.vec
             c = self.position - segment.p1
-            proj = segment.vec * (c.dot(segment.p1) / segment.vec.magnitudeSquared())
-            pygame.draw.line(screen, (200,200,0), segment.p1.toTuple(), proj.toTuple(), 2)
-            d = proj - c
+            #print "Position, C"
+            #print self.position, c
+            proj = segment.vec * (c.dot(segment.vec) / segment.vec.magnitudeSquared())
+            #print "Projection onto vec"
+            #print proj
+            #pygame.draw.line(screen, (200,200,0), segment.p1.toTuple(), proj.toTuple(), 2)
+            #print "D vec"
+            d = c - proj
+            #print d
+            collision = False
+            #print d.magnitudeSquared(), self.radiusSquared
             if d.magnitudeSquared() <= self.radiusSquared:
-                print "collision I think"
-                if proj.dot(segment.vec) > 0:
-                    self.color = (200,200,0)
+                #print "Collision Step 1"
+                #print proj.dot(segment.vec)
+                if proj.dot(segment.vec) < 0:
+                    #print "By P1"
+                    #print c.magnitudeSquared(), self.radiusSquared
+                    if c.magnitudeSquared() < self.radiusSquared:
+                        #print "colliding out of bounds near P1"
+                        collision = True
+                elif proj.dot(segment.vec) > 0:
+                    #print "By P2 or inbounds"
+                    #print "vec distance VS proj distance"
+                    #print segment.vec.magnitudeSquared(), proj.magnitudeSquared()
+                    if segment.vec.magnitudeSquared() < proj.magnitudeSquared():
+                        #print "Out of bounds by P2"
+                        c2 = self.position - segment.p2
+                        #print c2.magnitudeSquared, self.radiusSquared
+                        if c2.magnitudeSquared() < self.radiusSquared:
+                            #print "colliding out of bounds near P2"
+                            collision = True
+                    else:
+                        print "inbounds"
+                        dnew = d.norm() * self.radius
+                        test = segment.p1+proj+dnew
+                        #print self.position, test
+                        self.position = test
+                        collision = True
+                else:
+                    print "I guess the dot product is 0 here"
+
+            if collision:
+                self.color = (200,200,0)
+
+
 
     def Render(self, screen):
         pos = Vector2D(int(self.position.x), int(self.position.y))
